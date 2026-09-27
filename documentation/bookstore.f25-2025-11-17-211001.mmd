@@ -1,97 +1,77 @@
 classDiagram
-    Editable <|--Product
-    Product <|--Ticket
-    Product <|--Publication
+
+    Product <|-- Ticket
+    Product <|-- Publication
     Publication <|-- Book
     Publication <|-- Magazine
     Magazine <|-- DiscMag
+
     SaleableItem <|.. Product
     Serializable <|.. Product
-    Product <-- CashTill
 
-    class Product{
-        -String productId
-    }
+    Cart "*" -- "*" Product : contains
 
-    class Serializable{
-        <<interface>>
-    }
-    class Ticket{
-        +description
-        +price
-        +sellItem()
-    }
-    class Editable{
+    class Product {
         <<abstract>>
-        -Scanner input
-        +String getInput(String)
-        +int getInput(int)
-        +double getInput(double)
-        +boolean getInput(boolean)
-        +Date getInput(Date)
-        +Enum getInput(Enum)
-        +edit()*
-        +initialize()*
-
+        -Long id
+        -Set~Cart~ carts
+        +Long getId()
+        +Set~Cart~ getCarts()
     }
-    class Publication{
-        <<Abstract>>
+
+    class Cart {
+        -Long id
+        -Set~Product~ products
+        +Long getId()
+        +Set~Product~ getProducts()
+        +addProduct(Product product)
+    }
+
+    class Publication {
+        <<abstract>>
         -String title
         -double price
         -int copies
-        +getPrice()
-
-        +Publication()
-        +Publication(String title, double price, int copies)
-        +toString()
-        +equals()
-        +hashCode()
-
+        +String getTitle()
+        +double getPrice()
+        +int getCopies()
+        +sellItem()
     }
-    class Book{
+
+    class Book {
+        -String isbn
         -String author
-        +edit()
-        +initialize()
+        +String getIsbn()
+        +String getAuthor()
         +sellItem()
-
-        +Book()
-        +Book(String author)
-        +Book(String author, String title, double price, int copies)
-        +toString()
-        +equals()
-        +hashCode()
-
     }
-    class Magazine{
+
+    class Magazine {
         -int orderQty
-        -java.util.Date currentIssue
-
-        +Magazine()
-        +Magazine(int orderQty, Date currentIssue, String title, double price, int copies)
-
-        +edit()
-        +initialize()
-        +sellItem()
+        -LocalDateTime currentIssue
+        +int getOrderQty()
+        +LocalDateTime getCurrentIssue()
     }
-    class DiscMag{
+
+    class DiscMag {
         -boolean hasDisc
-        +edit()
-        +initialize()
+        +boolean isHasDisc()
+    }
+
+    class Ticket {
+        -String description
+        -double price
+        +String getDescription()
+        +double getPrice()
         +sellItem()
-
-        +DiscMag()
-        +DiscMag(boolean, hasDisc, int orderQty, Date currentIssue, String title, double price, int copies)
-
     }
-    class CashTill{
-        -double runningTotal
-        +CashTill()
-        +showTotal()
-        +sellItem(SaleableItem item)
-    }
+
     class SaleableItem {
         <<interface>>
         +sellItem()
-        +getPrice()
+        +double getPrice()
+    }
 
+    class Serializable {
+        <<interface>>
     }
