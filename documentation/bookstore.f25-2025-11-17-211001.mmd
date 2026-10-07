@@ -10,21 +10,45 @@ classDiagram
     Serializable <|.. Product
 
     Cart "*" -- "*" Product : contains
+    Order "*" -- "*" Product : contains
 
     class Product {
         <<abstract>>
         -Long id
         -Set~Cart~ carts
+        -Set~Order~ orders
         +Long getId()
+        +void setId(Long id)
         +Set~Cart~ getCarts()
+        +void setCarts(Set~Cart~ carts)
+        +Set~Order~ getOrders()
+        +void setOrders(Set~Order~ orders)
     }
 
     class Cart {
         -Long id
         -Set~Product~ products
         +Long getId()
+        +void setId(Long id)
         +Set~Product~ getProducts()
-        +addProduct(Product product)
+        +void setProducts(Set~Product~ products)
+        +void addProduct(Product product)
+    }
+
+    class Order {
+        -Long id
+        -double totalAmount
+        -LocalDateTime orderDate
+        -Set~Product~ products
+        +Long getId()
+        +void setId(Long id)
+        +double getTotalAmount()
+        +void setTotalAmount(double totalAmount)
+        +LocalDateTime getOrderDate()
+        +void setOrderDate(LocalDateTime orderDate)
+        +Set~Product~ getProducts()
+        +void setProducts(Set~Product~ products)
+        +void addProduct(Product product)
     }
 
     class Publication {
@@ -33,9 +57,12 @@ classDiagram
         -double price
         -int copies
         +String getTitle()
+        +void setTitle(String title)
         +double getPrice()
+        +void setPrice(double price)
         +int getCopies()
-        +sellItem()
+        +void setCopies(int copies)
+        +void sellItem()
     }
 
     class Book {
@@ -43,7 +70,7 @@ classDiagram
         -String author
         +String getIsbn()
         +String getAuthor()
-        +sellItem()
+        +void sellItem()
     }
 
     class Magazine {
@@ -63,12 +90,12 @@ classDiagram
         -double price
         +String getDescription()
         +double getPrice()
-        +sellItem()
+        +void sellItem()
     }
 
     class SaleableItem {
         <<interface>>
-        +sellItem()
+        +void sellItem()
         +double getPrice()
     }
 
