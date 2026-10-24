@@ -26,15 +26,17 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
         http
                 .authorizeHttpRequests(requests -> requests
 
-                        // Public pages
+                        // Public pages - no login required
                         .requestMatchers(
                                 "/h2-console/**",
                                 "/login",
+                                "/register",
                                 "/css/**",
                                 "/js/**"
                         ).permitAll()
@@ -46,7 +48,7 @@ public class WebSecurityConfig {
                                 "/books/delete/**"
                         ).hasRole("ADMIN")
 
-                        // Other pages require login
+                        // All other pages require login
                         .anyRequest().authenticated()
                 )
 
@@ -71,6 +73,7 @@ public class WebSecurityConfig {
                 )
         );
 
+        // Disable CSRF only for H2 console
         http.csrf(csrf ->
                 csrf.ignoringRequestMatchers("/h2-console/**")
         );

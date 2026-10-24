@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration</title>
+</head>
+
+<body>
+
+<h1>Create New Account</h1>
+
+<!-- Show error if username already exists -->
+<p th:if="${param.error}" style="color: red;">
+    Username already exists. Please choose another username.
+</p>
+
+<form th:action="@{/register}" method="post">
+
+    <p>
+        <label for="username">Username:</label>
+        <input
+                type="text"
+                id="username"
+                name="username"
+                required
+        >
+    </p>
+
+    <p>
+        <label for="password">Password:</label>
+        <input
+                type="password"
+                id="password"
+                name="password"
+                required
+        >
+    </p>
+
+    <p>
+        <button type="submit">Register</button>
+    </p>
+
+</form>
+
+<p>
+    Already have an account?
+    <a th:href="@{/login}">Sign In</a>
+</p>
+
+</body>
+</html>

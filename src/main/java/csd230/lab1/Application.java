@@ -19,7 +19,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -32,7 +31,6 @@ public class Application implements CommandLineRunner {
 	private final ProductEntityRepository productRepository;
 	private final BookEntityRepository bookRepository;
 	private final CartEntityRepository cartRepository;
-
 	private final UserEntityRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
@@ -66,47 +64,47 @@ public class Application implements CommandLineRunner {
 
 		System.out.println("\n===== CREATE =====");
 
-		BookEntity book1 = new BookEntity(
-				faker.book().title(),
-				29.99,
-				10,
-				faker.book().author(),
-				"ISBN-001"
-		);
+		// Create sample products only if database is empty
+		if (productRepository.count() == 0) {
 
-		BookEntity book2 = new BookEntity(
-				faker.book().title(),
-				39.99,
-				5,
-				faker.book().author(),
-				"ISBN-002"
-		);
+			BookEntity book1 = new BookEntity(
+					faker.book().title(),
+					29.99,
+					10,
+					faker.book().author(),
+					"ISBN-001"
+			);
 
-		MagazineEntity magazine = new MagazineEntity(
-				"Technology Magazine",
-				12.99,
-				20,
-				50,
-				LocalDateTime.now()
-		);
+			BookEntity book2 = new BookEntity(
+					faker.book().title(),
+					39.99,
+					5,
+					faker.book().author(),
+					"ISBN-002"
+			);
 
-		productRepository.save(book1);
-		productRepository.save(book2);
-		productRepository.save(magazine);
+			MagazineEntity magazine = new MagazineEntity(
+					"Technology Magazine",
+					12.99,
+					20,
+					50,
+					LocalDateTime.now()
+			);
 
-		CartEntity cart1 = new CartEntity();
-		CartEntity cart2 = new CartEntity();
+			productRepository.save(book1);
+			productRepository.save(book2);
+			productRepository.save(magazine);
 
-		cart1.addProduct(book1);
-		cart1.addProduct(magazine);
+			System.out.println("Sample products created.");
 
-		cart2.addProduct(book1);
-		cart2.addProduct(book2);
+		} else {
+			System.out.println(
+					"Products already exist. Skipping sample products."
+			);
+		}
 
-		cartRepository.save(cart1);
-		cartRepository.save(cart2);
-
-		System.out.println("Products and carts created.");
+		// No shared demo carts are created.
+		// CartController creates a separate cart for each user.
 
 		// ===================================
 		// READ
@@ -127,6 +125,14 @@ public class Application implements CommandLineRunner {
 		for (CartEntity cart : allCarts) {
 
 			System.out.println("Cart ID: " + cart.getId());
+
+			if (cart.getUser() != null) {
+				System.out.println(
+						"Owner: " + cart.getUser().getUsername()
+				);
+			} else {
+				System.out.println("Owner: No user assigned");
+			}
 
 			for (ProductEntity product : cart.getProducts()) {
 				System.out.println("  Product: " + product);
@@ -178,20 +184,32 @@ public class Application implements CommandLineRunner {
 
 		System.out.println("\n===== UPDATE =====");
 
-		Optional<BookEntity> optionalBook =
-				bookRepository.findById(book1.getId());
+		// Update sample book only when it was just created
+		// This avoids changing prices after every restart.
+		if (bookRepository.findByIsbn("ISBN-001").size() > 0) {
 
-		if (optionalBook.isPresent()) {
+			Optional<BookEntity> optionalBook =
+					bookRepository.findById(
+							bookRepository.findByIsbn("ISBN-001")
+									.get(0)
+									.getId()
+					);
 
-			BookEntity bookToUpdate = optionalBook.get();
+			if (optionalBook.isPresent()) {
 
-			bookToUpdate.setPrice(24.99);
+				BookEntity bookToUpdate = optionalBook.get();
 
-			bookRepository.save(bookToUpdate);
+				// Demonstrate update without repeatedly changing data
+				if (bookToUpdate.getPrice() == 29.99) {
 
-			System.out.println(
-					"Updated book: " + bookToUpdate
-			);
+					bookToUpdate.setPrice(24.99);
+					bookRepository.save(bookToUpdate);
+
+					System.out.println(
+							"Updated book: " + bookToUpdate
+					);
+				}
+			}
 		}
 
 		// ===================================
@@ -200,24 +218,17 @@ public class Application implements CommandLineRunner {
 
 		System.out.println("\n===== DELETE =====");
 
-		BookEntity temporaryBook = new BookEntity(
-				"Temporary Book",
-				9.99,
-				1,
-				"Temporary Author",
-				"ISBN-DELETE"
-		);
+		// Avoid creating duplicate temporary books
+		List<BookEntity> temporaryBooks =
+				bookRepository.findByIsbn("ISBN-DELETE");
 
-		bookRepository.save(temporaryBook);
+		for (BookEntity temporaryBook : temporaryBooks) {
+			bookRepository.delete(temporaryBook);
+		}
 
 		System.out.println(
-				"Temporary book created with ID: "
-						+ temporaryBook.getId()
+				"Temporary demo books cleaned up if present."
 		);
-
-		bookRepository.delete(temporaryBook);
-
-		System.out.println("Temporary book deleted.");
 
 		// ===================================
 		// CREATE USERS - LECTURE 2.6
@@ -225,7 +236,7 @@ public class Application implements CommandLineRunner {
 
 		System.out.println("\n===== CREATE USERS =====");
 
-		// Create ADMIN account if it does not exist
+		// Create ADMIN account if missing
 		if (userRepository.findByUsername("admin") == null) {
 
 			UserEntity admin = new UserEntity(
@@ -239,7 +250,7 @@ public class Application implements CommandLineRunner {
 			System.out.println("Admin user created.");
 		}
 
-		// Create USER account if it does not exist
+		// Create regular USER account if missing
 		if (userRepository.findByUsername("user") == null) {
 
 			UserEntity user = new UserEntity(

@@ -1,18 +1,26 @@
+
 package csd230.lab1.controllers;
 
 import csd230.lab1.entities.CartEntity;
 import csd230.lab1.entities.OrderEntity;
 import csd230.lab1.entities.ProductEntity;
 import csd230.lab1.entities.PublicationEntity;
+import csd230.lab1.entities.UserEntity;
+
 import csd230.lab1.repositories.CartEntityRepository;
 import csd230.lab1.repositories.OrderEntityRepository;
 import csd230.lab1.repositories.ProductEntityRepository;
+import csd230.lab1.repositories.UserEntityRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,51 +31,91 @@ public class CartController {
     private final CartEntityRepository cartRepository;
     private final ProductEntityRepository productRepository;
     private final OrderEntityRepository orderRepository;
+    private final UserEntityRepository userRepository;
 
     public CartController(
             CartEntityRepository cartRepository,
             ProductEntityRepository productRepository,
-            OrderEntityRepository orderRepository) {
-
+            OrderEntityRepository orderRepository,
+            UserEntityRepository userRepository
+    ) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
     }
 
-    @GetMapping("/cart")
-    public String showCart(Model model) {
+    // Find or create the logged-in user's cart
+    private CartEntity getUserCart(Principal principal) {
 
-        CartEntity cart = cartRepository.findById(1L)
-                .orElseGet(() -> cartRepository.save(new CartEntity()));
+        UserEntity user = userRepository.findByUsername(
+                principal.getName()
+        );
+
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "Logged-in user not found"
+            );
+        }
+
+        CartEntity cart = cartRepository.findByUser(user);
+
+        if (cart == null) {
+
+            cart = new CartEntity();
+            cart.setUser(user);
+
+            cart = cartRepository.save(cart);
+        }
+
+        return cart;
+    }
+
+    // Show logged-in user's cart
+
+    @GetMapping("/cart")
+    @Transactional
+    public String showCart(Model model, Principal principal) {
+
+        CartEntity cart = getUserCart(principal);
 
         model.addAttribute("cart", cart);
+        model.addAttribute("username", principal.getName());
 
         return "cartDetails";
     }
 
-    @PostMapping("/cart/add/{productId}")
-    public String addToCart(@PathVariable Long productId) {
 
-        CartEntity cart = cartRepository.findById(1L)
-                .orElseGet(() -> cartRepository.save(new CartEntity()));
+    // Add product to logged-in user's cart
+    @PostMapping("/cart/add/{productId}")
+    @Transactional
+    public String addToCart(
+            @PathVariable Long productId,
+            Principal principal
+    ) {
+
+        CartEntity cart = getUserCart(principal);
 
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Product not found"));
+                        new IllegalArgumentException(
+                                "Product not found"
+                        )
+                );
 
         cart.addProduct(product);
+
         cartRepository.save(cart);
 
         return "redirect:/cart";
     }
 
+    // Checkout logged-in user's cart
     @PostMapping("/cart/checkout")
-    public String checkout() {
+    @Transactional
+    public String checkout(Principal principal) {
 
-        // Get default cart
-        CartEntity cart = cartRepository.findById(1L)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Cart not found"));
+        CartEntity cart = getUserCart(principal);
 
         // Do nothing if cart is empty
         if (cart.getProducts().isEmpty()) {
@@ -80,9 +128,20 @@ public class CartController {
 
         double total = 0.0;
 
-        // Make a copy so we can safely clear the cart later
+        // Copy products before clearing cart
         List<ProductEntity> products =
                 new ArrayList<>(cart.getProducts());
+
+        // Check all stock before changing anything
+        for (ProductEntity product : products) {
+
+            if (product instanceof PublicationEntity publication) {
+
+                if (publication.getCopies() <= 0) {
+                    return "redirect:/cart";
+                }
+            }
+        }
 
         // Process every product
         for (ProductEntity product : products) {
@@ -91,10 +150,6 @@ public class CartController {
 
             // Reduce stock for publications
             if (product instanceof PublicationEntity publication) {
-
-                if (publication.getCopies() <= 0) {
-                    return "redirect:/cart";
-                }
 
                 publication.setCopies(
                         publication.getCopies() - 1
@@ -113,7 +168,11 @@ public class CartController {
         // Save completed order
         OrderEntity savedOrder = orderRepository.save(order);
 
-        // Clear shopping cart
+        // Clear only this user's cart
+        for (ProductEntity product : products) {
+            product.getCarts().remove(cart);
+        }
+
         cart.getProducts().clear();
         cartRepository.save(cart);
 
@@ -121,14 +180,19 @@ public class CartController {
         return "redirect:/orders/" + savedOrder.getId();
     }
 
+    // Show order confirmation
     @GetMapping("/orders/{id}")
     public String showOrder(
             @PathVariable Long id,
-            Model model) {
+            Model model
+    ) {
 
         OrderEntity order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Order not found"));
+                        new IllegalArgumentException(
+                                "Order not found"
+                        )
+                );
 
         model.addAttribute("order", order);
 
