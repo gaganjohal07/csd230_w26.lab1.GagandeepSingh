@@ -1,5 +1,7 @@
+
 package csd230.lab1.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import csd230.lab1.pojos.SaleableItem;
 import jakarta.persistence.*;
 
@@ -20,9 +22,11 @@ public abstract class ProductEntity implements Serializable, SaleableItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "products")
     private Set<CartEntity> carts = new HashSet<>();
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "products")
     private Set<OrderEntity> orders = new HashSet<>();
 

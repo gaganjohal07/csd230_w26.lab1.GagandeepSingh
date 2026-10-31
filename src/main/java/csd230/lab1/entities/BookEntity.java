@@ -1,3 +1,4 @@
+
 package csd230.lab1.entities;
 
 import jakarta.persistence.DiscriminatorValue;
@@ -13,12 +14,12 @@ public class BookEntity extends PublicationEntity {
     public BookEntity() {
     }
 
-    public BookEntity(String title, double price, int copies, String author) {
+    public BookEntity(String title, Double price, Integer copies, String author) {
         super(title, price, copies);
         this.author = author;
     }
 
-    public BookEntity(String title, double price, int copies, String author, String isbn) {
+    public BookEntity(String title, Double price, Integer copies, String author, String isbn) {
         super(title, price, copies);
         this.author = author;
         this.isbn = isbn;
