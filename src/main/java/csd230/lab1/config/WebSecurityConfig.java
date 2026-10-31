@@ -5,14 +5,11 @@ import csd230.lab1.services.CustomUserDetailsService;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -31,51 +28,49 @@ public class WebSecurityConfig {
 
         http
                 .authorizeHttpRequests(requests -> requests
-
-                        // Public pages - no login required
                         .requestMatchers(
                                 "/h2-console/**",
                                 "/login",
                                 "/register",
                                 "/css/**",
-                                "/js/**"
+                                "/js/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api/rest/**"
                         ).permitAll()
 
-                        // Only ADMIN can manage books
                         .requestMatchers(
                                 "/books/add",
                                 "/books/edit/**",
                                 "/books/delete/**"
                         ).hasRole("ADMIN")
 
-                        // All other pages require login
                         .anyRequest().authenticated()
                 )
 
-                // Login configuration
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/books", true)
                         .permitAll()
                 )
 
-                // Logout configuration
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 );
 
-        // H2 Console configuration for development
         http.headers(headers ->
                 headers.frameOptions(frameOptions ->
                         frameOptions.sameOrigin()
                 )
         );
 
-        // Disable CSRF only for H2 console
         http.csrf(csrf ->
-                csrf.ignoringRequestMatchers("/h2-console/**")
+                csrf.ignoringRequestMatchers(
+                        "/h2-console/**",
+                        "/api/rest/**"
+                )
         );
 
         return http.build();
