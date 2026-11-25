@@ -6,7 +6,8 @@ export default function Book({
                                  onDelete,
                                  onUpdate,
                                  onAddToCart,
-                                 cartPending
+                                 cartPending,
+                                 canManage
                              }) {
     const { token } = useAuth();
 
@@ -61,7 +62,7 @@ export default function Book({
         }
     }
 
-    if (editing) {
+    if (editing && canManage) {
         return (
             <article className="form-section">
                 <form onSubmit={handleSave}>
@@ -147,13 +148,17 @@ export default function Book({
                 Add to Cart
             </button>
 
-            <button onClick={beginEdit}>
-                Edit
-            </button>
+            {canManage && (
+                <>
+                    <button onClick={beginEdit}>
+                        Edit
+                    </button>
 
-            <button onClick={() => onDelete(book.id)}>
-                Delete
-            </button>
+                    <button onClick={() => onDelete(book.id)}>
+                        Delete
+                    </button>
+                </>
+            )}
         </article>
     );
 }

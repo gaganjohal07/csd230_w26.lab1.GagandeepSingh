@@ -34,7 +34,7 @@ function SignedInBookApp() {
 }
 
 function BookApp() {
-    const { token } = useAuth();
+    const { token, isAdmin } = useAuth();
 
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -220,6 +220,7 @@ function BookApp() {
                                 error={error}
                                 onDelete={handleDeleteBook}
                                 onUpdate={handleUpdateBook}
+                                canManage={isAdmin}
                                 onAddToCart={changeCart}
                                 cartPending={cartLoading || cartPending}
                             />
@@ -229,9 +230,15 @@ function BookApp() {
                     <Route
                         path="/add"
                         element={
-                            <AddBookForm
-                                onBookAdded={handleBookAdded}
-                            />
+                            isAdmin ? (
+                                <AddBookForm
+                                    onBookAdded={handleBookAdded}
+                                />
+                            ) : (
+                                <p role="alert">
+                                    Administrator access is required.
+                                </p>
+                            )
                         }
                     />
 
@@ -239,6 +246,7 @@ function BookApp() {
                         path="/magazines"
                         element={
                             <MagazineList
+                                canManage={isAdmin}
                                 onAddToCart={changeCart}
                                 cartPending={cartLoading || cartPending}
                             />

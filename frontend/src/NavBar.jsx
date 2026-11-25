@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router';
 import useAuth from './useAuth.js';
 
 export default function NavBar() {
-    const { logout } = useAuth();
+    const { logout, isAdmin } = useAuth();
     const navigate = useNavigate();
 
     function handleLogout() {
@@ -23,7 +23,9 @@ export default function NavBar() {
         }}>
             <Link to="/">Home</Link>
             <Link to="/inventory">Books</Link>
-            <Link to="/add">Add Book</Link>
+
+            {isAdmin && <Link to="/add">Add Book</Link>}
+
             <Link to="/magazines">Magazines</Link>
             <Link to="/cart">My Cart</Link>
 

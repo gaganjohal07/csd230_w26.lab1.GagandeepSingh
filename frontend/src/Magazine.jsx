@@ -11,7 +11,8 @@ export default function Magazine({
                                      onUpdate,
                                      onDelete,
                                      onAddToCart,
-                                     cartPending
+                                     cartPending,
+                                     canManage
                                  }) {
     const { token } = useAuth();
 
@@ -74,7 +75,7 @@ export default function Magazine({
         }
     }
 
-    if (editing) {
+    if (editing && canManage) {
         return (
             <article className="form-section">
                 <form onSubmit={handleSave}>
@@ -175,13 +176,17 @@ export default function Magazine({
                 Add to Cart
             </button>
 
-            <button onClick={beginEdit}>
-                Edit
-            </button>
+            {canManage && (
+                <>
+                    <button onClick={beginEdit}>
+                        Edit
+                    </button>
 
-            <button onClick={() => onDelete(id)}>
-                Delete
-            </button>
+                    <button onClick={() => onDelete(id)}>
+                        Delete
+                    </button>
+                </>
+            )}
         </article>
     );
 }

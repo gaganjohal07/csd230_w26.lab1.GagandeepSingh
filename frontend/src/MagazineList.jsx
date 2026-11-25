@@ -6,7 +6,8 @@ import useAuth from './useAuth.js';
 
 export default function MagazineList({
                                          onAddToCart,
-                                         cartPending
+                                         cartPending,
+                                         canManage
                                      }) {
     const { token } = useAuth();
 
@@ -110,9 +111,11 @@ export default function MagazineList({
         <section>
             <h2>Magazine Inventory</h2>
 
-            <MagazineForm
-                onMagazineAdded={handleMagazineAdded}
-            />
+            {canManage && (
+                <MagazineForm
+                    onMagazineAdded={handleMagazineAdded}
+                />
+            )}
 
             {loading && <p>Loading magazines...</p>}
 
@@ -130,6 +133,7 @@ export default function MagazineList({
                     onDelete={handleDeleteMagazine}
                     onAddToCart={onAddToCart}
                     cartPending={cartPending}
+                    canManage={canManage}
                 />
             ))}
         </section>
