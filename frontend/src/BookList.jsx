@@ -5,7 +5,9 @@ export default function BookList({
                                      loading,
                                      error,
                                      onDelete,
-                                     onUpdate
+                                     onUpdate,
+                                     onAddToCart,
+                                     cartPending
                                  }) {
     return (
         <section className="list-section">
@@ -25,6 +27,8 @@ export default function BookList({
                     book={book}
                     onDelete={onDelete}
                     onUpdate={onUpdate}
+                    onAddToCart={onAddToCart}
+                    cartPending={cartPending}
                 />
             ))}
         </section>

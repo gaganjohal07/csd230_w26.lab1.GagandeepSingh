@@ -1,7 +1,10 @@
 import api from './api.js';
 import { useState } from 'react';
+import useAuth from './useAuth.js';
 
 export default function AddBookForm({ onBookAdded }) {
+    const { token } = useAuth();
+
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [isbn, setIsbn] = useState('');
@@ -10,8 +13,17 @@ export default function AddBookForm({ onBookAdded }) {
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
+    function isCurrent() {
+        return localStorage.getItem('token') === token;
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
+
+        if (!isCurrent() || saving) {
+            return;
+        }
+
         setError('');
         setSaving(true);
 
@@ -24,19 +36,25 @@ export default function AddBookForm({ onBookAdded }) {
                 copies: Number(copies)
             });
 
-            const savedBook = response.data;
-
-            onBookAdded(savedBook);
+            if (!isCurrent()) {
+                return;
+            }
 
             setTitle('');
             setAuthor('');
             setIsbn('');
             setPrice('');
             setCopies(1);
+
+            onBookAdded(response.data);
         } catch (err) {
-            setError(err.message);
+            if (isCurrent()) {
+                setError(err.message);
+            }
         } finally {
-            setSaving(false);
+            if (isCurrent()) {
+                setSaving(false);
+            }
         }
     }
 
@@ -91,7 +109,11 @@ export default function AddBookForm({ onBookAdded }) {
                     </button>
                 </div>
 
-                {error && <p className="error">{error}</p>}
+                {error && (
+                    <p className="error" role="alert">
+                        {error}
+                    </p>
+                )}
             </form>
         </section>
     );

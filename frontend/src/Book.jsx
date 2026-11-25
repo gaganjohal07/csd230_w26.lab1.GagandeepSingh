@@ -1,10 +1,23 @@
 import { useState } from 'react';
+import useAuth from './useAuth.js';
 
-export default function Book({ book, onDelete, onUpdate }) {
+export default function Book({
+                                 book,
+                                 onDelete,
+                                 onUpdate,
+                                 onAddToCart,
+                                 cartPending
+                             }) {
+    const { token } = useAuth();
+
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(book);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    function isCurrent() {
+        return localStorage.getItem('token') === token;
+    }
 
     function beginEdit() {
         setDraft({ ...book });
@@ -19,6 +32,11 @@ export default function Book({ book, onDelete, onUpdate }) {
 
     async function handleSave(event) {
         event.preventDefault();
+
+        if (!isCurrent()) {
+            return;
+        }
+
         setSaving(true);
         setError('');
 
@@ -29,11 +47,17 @@ export default function Book({ book, onDelete, onUpdate }) {
                 copies: Number(draft.copies)
             });
 
-            setEditing(false);
+            if (isCurrent()) {
+                setEditing(false);
+            }
         } catch (err) {
-            setError(err.message);
+            if (isCurrent()) {
+                setError(err.message);
+            }
         } finally {
-            setSaving(false);
+            if (isCurrent()) {
+                setSaving(false);
+            }
         }
     }
 
@@ -45,7 +69,8 @@ export default function Book({ book, onDelete, onUpdate }) {
                     <input
                         value={draft.title}
                         onChange={e => setDraft({
-                            ...draft, title: e.target.value
+                            ...draft,
+                            title: e.target.value
                         })}
                         required
                     />
@@ -54,7 +79,8 @@ export default function Book({ book, onDelete, onUpdate }) {
                     <input
                         value={draft.author}
                         onChange={e => setDraft({
-                            ...draft, author: e.target.value
+                            ...draft,
+                            author: e.target.value
                         })}
                         required
                     />
@@ -66,7 +92,8 @@ export default function Book({ book, onDelete, onUpdate }) {
                         step="0.01"
                         value={draft.price}
                         onChange={e => setDraft({
-                            ...draft, price: e.target.value
+                            ...draft,
+                            price: e.target.value
                         })}
                         required
                     />
@@ -77,13 +104,16 @@ export default function Book({ book, onDelete, onUpdate }) {
                         min="0"
                         value={draft.copies}
                         onChange={e => setDraft({
-                            ...draft, copies: e.target.value
+                            ...draft,
+                            copies: e.target.value
                         })}
                         required
                     />
 
                     <div className="form-buttons">
-                        <button disabled={saving}>Save</button>
+                        <button disabled={saving}>
+                            {saving ? 'Saving...' : 'Save'}
+                        </button>
 
                         <button
                             type="button"
@@ -94,7 +124,9 @@ export default function Book({ book, onDelete, onUpdate }) {
                         </button>
                     </div>
 
-                    {error && <p role="alert">{error}</p>}
+                    {error && (
+                        <p className="error">{error}</p>
+                    )}
                 </form>
             </article>
         );
@@ -108,7 +140,17 @@ export default function Book({ book, onDelete, onUpdate }) {
             <p>Price: ${book.price}</p>
             <p>Copies: {book.copies}</p>
 
-            <button onClick={beginEdit}>Edit</button>
+            <button
+                disabled={cartPending}
+                onClick={() => onAddToCart(book.id)}
+            >
+                Add to Cart
+            </button>
+
+            <button onClick={beginEdit}>
+                Edit
+            </button>
+
             <button onClick={() => onDelete(book.id)}>
                 Delete
             </button>

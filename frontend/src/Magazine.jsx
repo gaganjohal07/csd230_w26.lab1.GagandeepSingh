@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import useAuth from './useAuth.js';
 
 export default function Magazine({
                                      id,
@@ -8,12 +9,20 @@ export default function Magazine({
                                      orderQty,
                                      currentIssue,
                                      onUpdate,
-                                     onDelete
+                                     onDelete,
+                                     onAddToCart,
+                                     cartPending
                                  }) {
+    const { token } = useAuth();
+
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState({});
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    function isCurrent() {
+        return localStorage.getItem('token') === token;
+    }
 
     function beginEdit() {
         setDraft({
@@ -35,6 +44,11 @@ export default function Magazine({
 
     async function handleSave(event) {
         event.preventDefault();
+
+        if (!isCurrent()) {
+            return;
+        }
+
         setSaving(true);
         setError('');
 
@@ -46,11 +60,17 @@ export default function Magazine({
                 orderQty: Number(draft.orderQty)
             });
 
-            setEditing(false);
+            if (isCurrent()) {
+                setEditing(false);
+            }
         } catch (err) {
-            setError(err.message);
+            if (isCurrent()) {
+                setError(err.message);
+            }
         } finally {
-            setSaving(false);
+            if (isCurrent()) {
+                setSaving(false);
+            }
         }
     }
 
@@ -62,7 +82,8 @@ export default function Magazine({
                     <input
                         value={draft.title}
                         onChange={e => setDraft({
-                            ...draft, title: e.target.value
+                            ...draft,
+                            title: e.target.value
                         })}
                         required
                     />
@@ -74,7 +95,8 @@ export default function Magazine({
                         step="0.01"
                         value={draft.price}
                         onChange={e => setDraft({
-                            ...draft, price: e.target.value
+                            ...draft,
+                            price: e.target.value
                         })}
                         required
                     />
@@ -85,7 +107,8 @@ export default function Magazine({
                         min="0"
                         value={draft.copies}
                         onChange={e => setDraft({
-                            ...draft, copies: e.target.value
+                            ...draft,
+                            copies: e.target.value
                         })}
                         required
                     />
@@ -96,7 +119,8 @@ export default function Magazine({
                         min="0"
                         value={draft.orderQty}
                         onChange={e => setDraft({
-                            ...draft, orderQty: e.target.value
+                            ...draft,
+                            orderQty: e.target.value
                         })}
                         required
                     />
@@ -107,7 +131,8 @@ export default function Magazine({
                         step="1"
                         value={draft.currentIssue}
                         onChange={e => setDraft({
-                            ...draft, currentIssue: e.target.value
+                            ...draft,
+                            currentIssue: e.target.value
                         })}
                         required
                     />
@@ -126,7 +151,9 @@ export default function Magazine({
                         </button>
                     </div>
 
-                    {error && <p className="error">{error}</p>}
+                    {error && (
+                        <p className="error">{error}</p>
+                    )}
                 </form>
             </article>
         );
@@ -141,7 +168,17 @@ export default function Magazine({
             <p>Order Quantity: {orderQty}</p>
             <p>Current Issue: {currentIssue}</p>
 
-            <button onClick={beginEdit}>Edit</button>
+            <button
+                disabled={cartPending}
+                onClick={() => onAddToCart(id)}
+            >
+                Add to Cart
+            </button>
+
+            <button onClick={beginEdit}>
+                Edit
+            </button>
+
             <button onClick={() => onDelete(id)}>
                 Delete
             </button>

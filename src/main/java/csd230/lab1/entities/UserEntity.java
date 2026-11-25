@@ -1,6 +1,6 @@
-
 package csd230.lab1.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -44,6 +44,7 @@ public class UserEntity {
         this.username = username;
     }
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     public String getPassword() {
         return password;
     }

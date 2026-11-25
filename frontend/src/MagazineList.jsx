@@ -2,28 +2,47 @@ import api from './api.js';
 import { useState, useEffect } from 'react';
 import Magazine from './Magazine.jsx';
 import MagazineForm from './MagazineForm.jsx';
+import useAuth from './useAuth.js';
 
-export default function MagazineList() {
+export default function MagazineList({
+                                         onAddToCart,
+                                         cartPending
+                                     }) {
+    const { token } = useAuth();
+
     const [magazines, setMagazines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    function isCurrent() {
+        return localStorage.getItem('token') === token;
+    }
 
     useEffect(() => {
         let active = true;
 
         api.get('/magazines')
             .then(response => {
-                if (active) {
+                if (
+                    active &&
+                    localStorage.getItem('token') === token
+                ) {
                     setMagazines(response.data);
                 }
             })
             .catch(err => {
-                if (active) {
+                if (
+                    active &&
+                    localStorage.getItem('token') === token
+                ) {
                     setError(err.message);
                 }
             })
             .finally(() => {
-                if (active) {
+                if (
+                    active &&
+                    localStorage.getItem('token') === token
+                ) {
                     setLoading(false);
                 }
             });
@@ -31,13 +50,19 @@ export default function MagazineList() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [token]);
 
     function handleMagazineAdded(saved) {
-        setMagazines(previous => [...previous, saved]);
+        if (isCurrent()) {
+            setMagazines(previous => [...previous, saved]);
+        }
     }
 
     async function handleDeleteMagazine(id) {
+        if (!isCurrent()) {
+            return;
+        }
+
         if (!window.confirm('Delete this magazine?')) {
             return;
         }
@@ -47,23 +72,38 @@ export default function MagazineList() {
         try {
             await api.delete(`/magazines/${id}`);
 
-            setMagazines(previous =>
-                previous.filter(magazine => magazine.id !== id)
-            );
+            if (isCurrent()) {
+                setMagazines(previous =>
+                    previous.filter(magazine =>
+                        magazine.id !== id
+                    )
+                );
+            }
         } catch (err) {
-            setError(err.message);
+            if (isCurrent()) {
+                setError(err.message);
+            }
         }
     }
 
     async function handleUpdateMagazine(id, data) {
-        const response = await api.put(`/magazines/${id}`, data);
-        const saved = response.data;
+        if (!isCurrent()) {
+            return;
+        }
 
-        setMagazines(previous =>
-            previous.map(magazine =>
-                magazine.id === id ? saved : magazine
-            )
+        const response = await api.put(
+            `/magazines/${id}`, data
         );
+
+        if (isCurrent()) {
+            setMagazines(previous =>
+                previous.map(magazine =>
+                    magazine.id === id
+                        ? response.data
+                        : magazine
+                )
+            );
+        }
     }
 
     return (
@@ -88,6 +128,8 @@ export default function MagazineList() {
                     {...magazine}
                     onUpdate={handleUpdateMagazine}
                     onDelete={handleDeleteMagazine}
+                    onAddToCart={onAddToCart}
+                    cartPending={cartPending}
                 />
             ))}
         </section>

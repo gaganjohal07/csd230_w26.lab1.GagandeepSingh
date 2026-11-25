@@ -1,7 +1,10 @@
 import api from './api.js';
 import { useState } from 'react';
+import useAuth from './useAuth.js';
 
 export default function MagazineForm({ onMagazineAdded }) {
+    const { token } = useAuth();
+
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
     const [copies, setCopies] = useState(1);
@@ -10,8 +13,17 @@ export default function MagazineForm({ onMagazineAdded }) {
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
+    function isCurrent() {
+        return localStorage.getItem('token') === token;
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
+
+        if (!isCurrent() || saving) {
+            return;
+        }
+
         setError('');
         setSaving(true);
 
@@ -24,17 +36,25 @@ export default function MagazineForm({ onMagazineAdded }) {
                 currentIssue
             });
 
-            onMagazineAdded(response.data);
+            if (!isCurrent()) {
+                return;
+            }
 
             setTitle('');
             setPrice('');
             setCopies(1);
             setOrderQty(1);
             setCurrentIssue('');
+
+            onMagazineAdded(response.data);
         } catch (err) {
-            setError(err.message);
+            if (isCurrent()) {
+                setError(err.message);
+            }
         } finally {
-            setSaving(false);
+            if (isCurrent()) {
+                setSaving(false);
+            }
         }
     }
 
@@ -93,7 +113,11 @@ export default function MagazineForm({ onMagazineAdded }) {
                     </button>
                 </div>
 
-                {error && <p className="error">{error}</p>}
+                {error && (
+                    <p className="error" role="alert">
+                        {error}
+                    </p>
+                )}
             </form>
         </section>
     );
