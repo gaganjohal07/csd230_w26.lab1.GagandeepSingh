@@ -66,7 +66,11 @@ export default function Magazine({
             }
         } catch (err) {
             if (isCurrent()) {
-                setError(err.message);
+                setError(
+                    err.response?.status === 403
+                        ? 'Administrator permission is required for this action.'
+                        : err.message
+                );
             }
         } finally {
             if (isCurrent()) {

@@ -6,6 +6,7 @@ import Home from './Home.jsx';
 import BookList from './BookList.jsx';
 import AddBookForm from './AddBookForm.jsx';
 import MagazineList from './MagazineList.jsx';
+import MagazineForm from './MagazineForm.jsx';
 import AuthProvider from './AuthProvider.jsx';
 import useAuth from './useAuth.js';
 import Login from './Login.jsx';
@@ -147,6 +148,12 @@ function BookApp() {
         navigate('/inventory');
     }
 
+    function handleMagazineAdded() {
+        if (isCurrent()) {
+            navigate('/magazines');
+        }
+    }
+
     async function handleDeleteBook(id) {
         if (!isCurrent()) {
             return;
@@ -250,6 +257,21 @@ function BookApp() {
                                 onAddToCart={changeCart}
                                 cartPending={cartLoading || cartPending}
                             />
+                        }
+                    />
+
+                    <Route
+                        path="/magazines/add"
+                        element={
+                            isAdmin ? (
+                                <MagazineForm
+                                    onMagazineAdded={handleMagazineAdded}
+                                />
+                            ) : (
+                                <p role="alert">
+                                    Administrator access is required.
+                                </p>
+                            )
                         }
                     />
 

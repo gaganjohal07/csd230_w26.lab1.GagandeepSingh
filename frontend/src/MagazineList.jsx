@@ -36,7 +36,11 @@ export default function MagazineList({
                     active &&
                     localStorage.getItem('token') === token
                 ) {
-                    setError(err.message);
+                    setError(
+                    err.response?.status === 403
+                        ? 'Administrator permission is required for this action.'
+                        : err.message
+                );
                 }
             })
             .finally(() => {
@@ -82,7 +86,11 @@ export default function MagazineList({
             }
         } catch (err) {
             if (isCurrent()) {
-                setError(err.message);
+                setError(
+                    err.response?.status === 403
+                        ? 'Administrator permission is required for this action.'
+                        : err.message
+                );
             }
         }
     }

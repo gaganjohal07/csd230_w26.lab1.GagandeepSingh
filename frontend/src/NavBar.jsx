@@ -27,6 +27,11 @@ export default function NavBar() {
             {isAdmin && <Link to="/add">Add Book</Link>}
 
             <Link to="/magazines">Magazines</Link>
+
+            {isAdmin && (
+                <Link to="/magazines/add">Add Magazine</Link>
+            )}
+
             <Link to="/cart">My Cart</Link>
 
             <button onClick={handleLogout}>
